@@ -68,11 +68,10 @@ if (isset($_POST['usuario'])) {
     $stmt2 =  Conexion::conectar()->prepare($sql2);
     $stmt2->bindParam('IDUsuario', $IDUser , PDO::PARAM_STR);
     $stmt2->bindParam('IDPais', $Pais , PDO::PARAM_STR);
-    $stmt2->execute();  
+    
+    if ($stmt2->execute()) { // Check if second insert is also successful
 
-  
-
-    try {
+        try {
            //Server settings
 			    $mail = new PHPMailer(true);
 			    $mail->SMTPDebug = 0;                      // Enable verbose debug output
@@ -209,14 +208,23 @@ if (isset($_POST['usuario'])) {
           $mail->CharSet = 'UTF-8'; // Con esto ya funcionan los acentos
           $mail->send();
         } catch (Exception $e) {
-         echo "Hubo un error para enivar correo: {$mail->ErrorInfo}";
-       }
+          // Log the error to the server's error log
+          error_log("PHPMailer Error: {$mail->ErrorInfo}");
+        }
+        // If database operations were successful, echo "1"
+        echo "1";
 
-
-       echo "1";
-     }else{
-       echo "0";
-     }
+    } else {
+        // Error with $stmt2 (second insert)
+        error_log("Database error on second insert (paises_habilitado_empresa): " . implode(":", $stmt2->errorInfo()));
+        echo "0"; 
+    }
+    
+}else{
+    // Error with $stmt (first insert)
+    error_log("Database error on first insert (empresa_perfil): " . implode(":", $stmt->errorInfo()));
+    echo "0";
+}
 
 
 
